@@ -7,9 +7,9 @@ import { ConfigModule } from "@nestjs/config";
 import { BullModule } from "@nestjs/bull";
 import { CacheInterceptor, CacheModule } from "@nestjs/cache-manager";
 import { APP_INTERCEPTOR } from "@nestjs/core";
-import { createKeyv } from '@keyv/redis';
-import { Keyv } from 'keyv';
-import { CacheableMemory } from 'cacheable';
+import { createKeyv } from "@keyv/redis";
+import { Keyv } from "keyv";
+import { CacheableMemory } from "cacheable";
 
 @Module({
 	imports: [
@@ -17,27 +17,32 @@ import { CacheableMemory } from 'cacheable';
 		CacheModule.registerAsync({
 			isGlobal: true,
 			useFactory: async () => {
-			  return {
-				stores: [
-				  new Keyv({
-					store: new CacheableMemory({ ttl: 60000, lruSize: 5000 }),
-				  }),
-				  createKeyv('redis://localhost:6379'),
-				],
-			  };
+				return {
+					stores: [
+						new Keyv({
+							store: new CacheableMemory({ ttl: 60000, lruSize: 5000 }),
+						}),
+						createKeyv("redis://localhost:6379"),
+					],
+				};
 			},
-		  }),
+		}),
 		BullModule.forRoot({
 			redis: {
-			  host: 'localhost',
-			  port: 6379,
+				host: "localhost",
+				port: 6379,
 			},
-		  }),
-		AuthModule, UsersModule],
+		}),
+		AuthModule,
+		UsersModule,
+	],
 	controllers: [AppController],
-	providers: [ {
-		provide: APP_INTERCEPTOR,
-		useClass: CacheInterceptor,
-	  }, AppService],
+	providers: [
+		{
+			provide: APP_INTERCEPTOR,
+			useClass: CacheInterceptor,
+		},
+		AppService,
+	],
 })
 export class AppModule {}

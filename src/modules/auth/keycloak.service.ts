@@ -22,9 +22,11 @@ export class KeycloakService {
 		};
 
 		// Instantiate the Keycloak adapter
-		this.keycloak = new KeycloakConnect({ store: this.cacheManager }, keycloakConfig);
+		this.keycloak = new KeycloakConnect(
+			{ store: this.cacheManager },
+			keycloakConfig,
+		);
 	}
-
 
 	/**
 	 * Returns the Keycloak middleware.
@@ -65,7 +67,6 @@ export class KeycloakService {
 		const url = this.keycloak.loginUrl(uuid, redirectUrl);
 		res.redirect(url);
 	}
-
 
 	/**
 	 * Initiates the logout flow.
