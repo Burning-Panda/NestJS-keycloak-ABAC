@@ -1,12 +1,12 @@
 meta {
-  name: Logout
+  name: Refresh
   type: http
-  seq: 2
+  seq: 4
 }
 
 post {
-  url: {{base_url}}/auth/logout
-  body: none
+  url: {{base_url}}/auth/refresh
+  body: json
   auth: bearer
 }
 
@@ -14,7 +14,14 @@ auth:bearer {
   token: {{auth_token}}
 }
 
+body:json {
+  {
+    "refreshToken": "{{refresh_token}}"
+  }
+}
+
 script:post-response {
+  let data =res.body;
   bru.setEnvVar("auth_token",data.accessToken);
   bru.setEnvVar("refresh_token",data.refreshToken)
 }

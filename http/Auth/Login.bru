@@ -16,3 +16,10 @@ body:json {
     "password": "admin"
   }
 }
+
+script:post-response {
+  let data =res.body;
+  bru.setEnvVar("auth_token",data.accessToken);
+  bru.setEnvVar("refresh_token",data.refreshToken);
+  
+}
