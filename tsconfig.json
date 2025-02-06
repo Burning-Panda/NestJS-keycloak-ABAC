@@ -21,9 +21,7 @@
 		"noFallthroughCasesInSwitch": false,
 		"typeRoots": ["./node_modules/@types", "./src/@types"],
 		"paths": {
-			"#_modules/*": ["src/modules/*"],
-			"#_guards/*": ["src/guards/*"],
-			"#_decorators/*": ["src/decorators/*"]
+			"#auth/*": ["src/auth/*"]
 		}
 	},
 	"include": ["src/**/*"]

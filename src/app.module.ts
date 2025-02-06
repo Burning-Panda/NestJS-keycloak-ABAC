@@ -1,15 +1,15 @@
 import { Module } from "@nestjs/common";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
-import { UsersModule } from "#_modules/users/users.module";
-import { AuthModule } from "#_modules/auth/auth.module";
 import { ConfigModule } from "@nestjs/config";
 import { BullModule } from "@nestjs/bull";
-import { CacheInterceptor, CacheModule } from "@nestjs/cache-manager";
-import { APP_INTERCEPTOR } from "@nestjs/core";
+import { CacheModule } from "@nestjs/cache-manager";
 import { createKeyv } from "@keyv/redis";
 import { Keyv } from "keyv";
 import { CacheableMemory } from "cacheable";
+import { AuthModule } from "./auth/auth.module";
+import { PublicModule } from "./public/public.module";
+import { SecureModule } from './secure/secure.module';
 
 @Module({
 	imports: [
@@ -34,15 +34,10 @@ import { CacheableMemory } from "cacheable";
 			},
 		}),
 		AuthModule,
-		UsersModule,
+		PublicModule,
+		SecureModule,
 	],
 	controllers: [AppController],
-	providers: [
-		{
-			provide: APP_INTERCEPTOR,
-			useClass: CacheInterceptor,
-		},
-		AppService,
-	],
+	providers: [AppService],
 })
 export class AppModule {}

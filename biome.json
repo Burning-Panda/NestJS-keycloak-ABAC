@@ -11,8 +11,19 @@
 				"noExplicitAny": "warn"
 			},
 			"style": {
-				"useImportType": "warn"
+				"useImportType": "off",
+				"useEnumInitializers": "off",
+				"noNonNullAssertion": "off"
+			},
+			"complexity": {
+				"noStaticOnlyClass": "off",
+				"noThisInStatic": "off"
 			}
 		}
+	},
+	"formatter": {
+		"indentWidth": 2,
+		"indentStyle": "tab",
+		"lineWidth": 120
 	}
 }

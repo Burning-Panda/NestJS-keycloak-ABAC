@@ -1,12 +1,22 @@
 import { Controller, Get } from "@nestjs/common";
-import { AppService } from "./app.service";
 
 @Controller()
 export class AppController {
-	constructor(private readonly appService: AppService) {}
-
 	@Get()
-	getHello(): string {
-		return this.appService.getHello();
+	getHello(user: any): string {
+		if (user) {
+			return `Hello ${user.preferred_username}`;
+		}
+		return "Hello world!";
+	}
+
+	@Get("private")
+	getPrivate() {
+		return "Authenticated only!";
+	}
+
+	@Get("admin")
+	adminRole() {
+		return "Admin only!";
 	}
 }
