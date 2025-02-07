@@ -7,9 +7,9 @@ import { CacheModule } from "@nestjs/cache-manager";
 import { createKeyv } from "@keyv/redis";
 import { Keyv } from "keyv";
 import { CacheableMemory } from "cacheable";
-import { AuthModule } from "./auth/auth.module";
+import { AuthModule } from "@libs/auth/auth.module";
 import { PublicModule } from "./public/public.module";
-import { SecureModule } from './secure/secure.module';
+import { SecureModule } from "./secure/secure.module";
 
 @Module({
 	imports: [
