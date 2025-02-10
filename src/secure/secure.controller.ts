@@ -1,10 +1,10 @@
 import { Controller, Get, UseGuards, Req } from "@nestjs/common";
-import { Roles } from "#auth/decorators/roles.decorator";
-import { PermissionsGuard } from "#auth/guards/permissions.guard";
-import { AuthGuard } from "#auth/guards/auth.guard";
-import { RolesGuard } from "#auth/guards/roles.guard";
-import { Permissions } from "#auth/decorators/permissions.decorator";
-import { Actions, Resources } from "#auth/enums/permissions.enum";
+import { Roles } from "@libs/auth/decorators/roles.decorator";
+import { PermissionsGuard } from "@libs/auth/guards/permissions.guard";
+import { AuthGuard } from "@libs/auth/guards/auth.guard";
+import { RolesGuard } from "@libs/auth/guards/roles.guard";
+import { Permissions } from "@libs/auth/decorators/permissions.decorator";
+import { Actions, Resources } from "@libs/auth/enums/permissions.enum";
 
 @Controller("secure")
 export class SecureController {

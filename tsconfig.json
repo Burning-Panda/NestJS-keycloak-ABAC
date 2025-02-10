@@ -1,28 +1,38 @@
 {
-	"$schema": "http://json.schemastore.org/tsconfig",
-	"compilerOptions": {
-		"strict": true,
-		"module": "commonjs",
-		"declaration": true,
-		"removeComments": true,
-		"emitDecoratorMetadata": true,
-		"experimentalDecorators": true,
-		"allowSyntheticDefaultImports": true,
-		"target": "ES2021",
-		"sourceMap": true,
-		"outDir": "./dist",
-		"baseUrl": "./",
-		"incremental": true,
-		"skipLibCheck": true,
-		"strictNullChecks": true,
-		"forceConsistentCasingInFileNames": true,
-		"noImplicitAny": false,
-		"strictBindCallApply": false,
-		"noFallthroughCasesInSwitch": false,
-		"typeRoots": ["./node_modules/@types", "./src/@types"],
-		"paths": {
-			"#auth/*": ["src/auth/*"]
-		}
-	},
-	"include": ["src/**/*"]
+  "$schema": "http://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "strict": true,
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2021",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "noFallthroughCasesInSwitch": false,
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/@types"
+    ],
+    "paths": {
+      "@libs/auth": [
+        "libs/auth/src"
+      ],
+      "@libs/auth/*": [
+        "libs/auth/src/*"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*",
+    "libs/auth/src/decorators", "libs/auth/src/dto", "libs/auth/src/entities", "libs/auth/src/enums", "libs/auth/src/guards", "libs/auth/src/auth.controller.ts", "libs/auth/src/auth.module.ts", "libs/auth/src/auth.service.ts"  ]
 }
