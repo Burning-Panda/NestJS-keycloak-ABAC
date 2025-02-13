@@ -40,4 +40,8 @@ import { SecureModule } from "./secure/secure.module";
 	controllers: [AppController],
 	providers: [AppService],
 })
-export class AppModule {}
+export class AppModule {
+	configure(consumer: MiddlewareConsumer) {
+		consumer.apply(LoggerMiddleware).forRoutes("*");
+	}
+}
