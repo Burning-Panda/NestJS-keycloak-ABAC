@@ -9,11 +9,16 @@ export class AuthGuard implements CanActivate {
 		const request = context.switchToHttp().getRequest();
 		const authHeader = request.headers.authorization;
 
-		if (!authHeader || !authHeader.startsWith("Bearer ")) {
+		console.log(request.headers);
+
+		// Supports tokens starting with either "Bearer " or "Token "
+		const prefixes = ["Bearer ", "Token "];
+		if (!authHeader || !prefixes.some((prefix) => authHeader.startsWith(prefix))) {
 			throw new UnauthorizedException("Missing or invalid Authorization header");
 		}
 
-		const token = authHeader.split(" ")[1];
+		const prefixUsed = prefixes.find((prefix) => authHeader.startsWith(prefix))!;
+		const token = authHeader.slice(prefixUsed.length).trim();
 
 		try {
 			const payload = await this.authService.validateToken(token);
@@ -21,6 +26,8 @@ export class AuthGuard implements CanActivate {
 			request.user = payload; // Attach user info to the request
 			return true;
 		} catch (error) {
+			console.log(error);
+			Logger.error(error);
 			throw new UnauthorizedException("Invalid or expired token");
 		}
 	}

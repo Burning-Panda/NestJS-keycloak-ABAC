@@ -16,7 +16,7 @@ export class AuthService {
 		this.jwks = createRemoteJWKSet(new URL(this.jwksUri));
 	}
 
-	// 🔹 Handle User Login with Keycloak OAuth2 Password Grant
+	// Handle User Login with Keycloak OAuth2 Password Grant
 	async login(username: string, password: string) {
 		const tokenEndpoint = `${this.keycloakTennant}/protocol/openid-connect/token`;
 
@@ -43,22 +43,52 @@ export class AuthService {
 		}
 	}
 
-	// 🔹 Validate JWT Token
+	// Validate JWT Token
 	async validateToken(token: string): Promise<JWTPayload> {
 		try {
-			const { payload } = await jwtVerify(token, this.jwks, {
-				issuer: `${this.keycloakTennant}`,
-				//audience: process.env.KEYCLOAK_CLIENT_ID!,
+			const cleanToken = token.replace(/^(Bearer|Token)\s+/i, "");
+
+			// Add token debugging
+			try {
+				const decoded = JSON.parse(Buffer.from(cleanToken.split(".")[1], "base64").toString());
+				Logger.debug("Decoded token payload:", decoded);
+				Logger.debug("Token claims:", {
+					iss: decoded.iss,
+					aud: decoded.aud,
+					sub: decoded.sub,
+				});
+			} catch (e) {
+				Logger.error("Failed to decode token for debugging:", e);
+			}
+
+			// Debug logging
+			Logger.debug("JWKS URI:", this.jwksUri);
+			Logger.debug("Issuer:", this.keycloakTennant);
+
+			const { payload } = await jwtVerify(cleanToken, this.jwks, {
+				issuer: this.keycloakTennant,
+				algorithms: ["RS256"],
+				clockTolerance: 60,
+				// Removing audience validation completely
 			});
+
+			// Additional validation if needed
+			if (!payload.sub) {
+				throw new Error("Token payload missing subject claim");
+			}
 
 			return payload;
 		} catch (error) {
-			Logger.error(error);
+			Logger.error("Token validation error:", error);
+			if (error instanceof Error) {
+				Logger.error("Error name:", error.name);
+				Logger.error("Error message:", error.message);
+			}
 			throw new UnauthorizedException("Invalid access token");
 		}
 	}
 
-	// 🔹 Handle Refresh Token
+	// Handle Refresh Token
 	async refreshToken(refreshToken: string) {
 		const tokenEndpoint = `${this.keycloakTennant}/protocol/openid-connect/token`;
 
@@ -83,7 +113,7 @@ export class AuthService {
 		}
 	}
 
-	// 🔹 Handle User Logout
+	// Handle User Logout
 	async logout(user: JWTPayload) {
 		const tokenEndpoint = `${this.keycloakTennant}/protocol/openid-connect/logout`;
 
