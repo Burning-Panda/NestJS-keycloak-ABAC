@@ -48,6 +48,7 @@ export class AuthService {
 		try {
 			const cleanToken = token.replace(/^(Bearer|Token)\s+/i, "");
 
+			// TODO: Remove this
 			// Add token debugging
 			try {
 				const decoded = JSON.parse(Buffer.from(cleanToken.split(".")[1], "base64").toString());
@@ -61,6 +62,7 @@ export class AuthService {
 				Logger.error("Failed to decode token for debugging:", e);
 			}
 
+			// TODO: Remove this
 			// Debug logging
 			Logger.debug("JWKS URI:", this.jwksUri);
 			Logger.debug("Issuer:", this.keycloakTennant);
@@ -120,11 +122,13 @@ export class AuthService {
 		try {
 			await axios.post(tokenEndpoint, {
 				client_id: process.env.KEYCLOAK_CLIENT_ID!,
+				token: user.access_token,
 				refresh_token: user.refresh_token,
 			});
 
 			return { message: "Logged out successfully" };
 		} catch (error) {
+			Logger.error(error);
 			throw new UnauthorizedException("Failed to logout");
 		}
 	}
