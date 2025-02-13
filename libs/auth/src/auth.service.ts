@@ -11,7 +11,7 @@ export class AuthService {
 	constructor() {
 		const keycloakBaseUrl = process.env.KEYCLOAK_URL;
 		const realm = process.env.KEYCLOAK_REALM;
-		this.keycloakTennant = `${process.env.KEYCLOAK_URL}/realms/${process.env.KEYCLOAK_REALM}`;
+		this.keycloakTennant = `${keycloakBaseUrl}/realms/${realm}`;
 		this.jwksUri = `${this.keycloakTennant}/protocol/openid-connect/certs`;
 		this.jwks = createRemoteJWKSet(new URL(this.jwksUri));
 	}
@@ -96,6 +96,20 @@ export class AuthService {
 			return { message: "Logged out successfully" };
 		} catch (error) {
 			throw new UnauthorizedException("Failed to logout");
+		}
+	}
+
+	// 🔹 Get User Info
+	async getMe(user: JWTPayload) {
+		const userEndpoint = `${this.keycloakTennant}/protocol/openid-connect/userinfo`;
+
+		try {
+			const response = await axios.get(userEndpoint, { headers: { Authorization: `Bearer ${user.access_token}` } });
+			Logger.log(response.data);
+			return response.data;
+		} catch (error) {
+			Logger.error(error);
+			throw new UnauthorizedException("Failed to get user info");
 		}
 	}
 }

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Req } from "@nestjs/common";
+import { Controller, Post, Body, UseGuards, Req, Get } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { AuthGuard } from "./guards/auth.guard";
 
@@ -34,5 +34,11 @@ export class AuthController {
 	@Post("logout")
 	async logout(@Req() req) {
 		return this.authService.logout(req.user);
+	}
+
+	@UseGuards(AuthGuard)
+	@Get("me")
+	me(@Req() req): Promise<Object> {
+		return this.authService.getMe(req.user);
 	}
 }
