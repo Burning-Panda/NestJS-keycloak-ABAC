@@ -2,6 +2,19 @@ import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import axios from "axios";
 import { createRemoteJWKSet, jwtVerify, JWTPayload } from "jose";
 
+/**
+ * Auth Service
+ *
+ * @description
+ * This service is responsible for handling the authentication process with Keycloak.
+ * It is responsible for validating tokens, refreshing tokens, and logging out users.
+ *
+ * @param {string} jwksUri - The URI of the JWKS endpoint.
+ * @param {ReturnType<typeof createRemoteJWKSet>} jwks - The JWKS object.
+ * @param {string} keycloakTennant - The Keycloak tenant.
+ *
+ * @link https://www.keycloak.org/securing-apps/oidc-layers#_oidc_available_endpoints
+ */
 @Injectable()
 export class AuthService {
 	private jwksUri: string;
