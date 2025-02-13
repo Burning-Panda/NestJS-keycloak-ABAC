@@ -4,7 +4,7 @@
 	"description": "This is a NestJS Keycloak Auth boilerplate experiment, it will be used to build a NestJS app with Keycloak Auth",
 	"author": "Burning-Panda",
 	"private": true,
-	"license": "UNLICENSED",
+	"license": "MIT",
 	"scripts": {
 		"build": "nest build",
 		"format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"libs/**/*.ts\"",
