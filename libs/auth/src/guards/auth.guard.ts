@@ -9,7 +9,8 @@ export class AuthGuard implements CanActivate {
 		const request = context.switchToHttp().getRequest();
 		const authHeader = request.headers.authorization;
 
-		console.log(request.headers);
+		// Debug log headers
+		Logger.debug("Request headers:", request.headers);
 
 		// Supports tokens starting with either "Bearer " or "Token "
 		const prefixes = ["Bearer ", "Token "];
@@ -21,13 +22,14 @@ export class AuthGuard implements CanActivate {
 		const token = authHeader.slice(prefixUsed.length).trim();
 
 		try {
-			const payload = await this.authService.validateToken(token);
-
-			request.user = payload; // Attach user info to the request
+			const claims = await this.authService.validateToken(token);
+			request.user = {
+				...claims,
+				access_token: token, // Add the token to the user object for later use
+			};
 			return true;
 		} catch (error) {
-			console.log(error);
-			Logger.error(error);
+			Logger.error("Token validation error:", error);
 			throw new UnauthorizedException("Invalid or expired token");
 		}
 	}

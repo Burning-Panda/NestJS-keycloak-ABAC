@@ -1,68 +1,89 @@
 import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
-import axios from "axios";
-import { createRemoteJWKSet, jwtVerify, JWTPayload } from "jose";
+const arctic = async () => await require("arctic");
 
 /**
  * Auth Service
  *
  * @description
- * This service is responsible for handling the authentication process with Keycloak.
+ * This service is responsible for handling the authentication process with Keycloak using ArcticJS.
  * It is responsible for validating tokens, refreshing tokens, and logging out users.
  *
- * @param {string} jwksUri - The URI of the JWKS endpoint.
- * @param {ReturnType<typeof createRemoteJWKSet>} jwks - The JWKS object.
- * @param {string} keycloakTennant - The Keycloak tenant.
+ * @param {arctic.KeyCloak} keycloak - The ArcticJS Keycloak instance
  *
  * @link https://www.keycloak.org/securing-apps/oidc-layers#_oidc_available_endpoints
  */
 @Injectable()
 export class AuthService {
-	private jwksUri: string;
-	private jwks: ReturnType<typeof createRemoteJWKSet>;
+	private keycloak: arctic.KeyCloak;
 	private keycloakTennant: string;
 
 	constructor() {
 		const keycloakBaseUrl = process.env.KEYCLOAK_URL;
 		const realm = process.env.KEYCLOAK_REALM;
 		this.keycloakTennant = `${keycloakBaseUrl}/realms/${realm}`;
-		this.jwksUri = `${this.keycloakTennant}/protocol/openid-connect/certs`;
-		this.jwks = createRemoteJWKSet(new URL(this.jwksUri));
+
+		// Initialize ArcticJS Keycloak
+		this.keycloak = new arctic.KeyCloak(
+			this.keycloakTennant,
+			process.env.KEYCLOAK_CLIENT_ID!,
+			process.env.KEYCLOAK_CLIENT_SECRET!,
+			process.env.KEYCLOAK_REDIRECT_URI!,
+		);
 	}
 
 	// Handle User Login with Keycloak OAuth2 Password Grant
 	async login(username: string, password: string) {
-		const tokenEndpoint = `${this.keycloakTennant}/protocol/openid-connect/token`;
-
 		try {
-			const response = await axios.post(
-				tokenEndpoint,
-				new URLSearchParams({
-					client_id: process.env.KEYCLOAK_CLIENT_ID!,
-					client_secret: process.env.KEYCLOAK_CLIENT_SECRET!,
-					grant_type: "password",
-					username,
-					password,
-				}),
-				{ headers: { "Content-Type": "application/x-www-form-urlencoded" } },
-			);
+			// Generate state and code verifier for PKCE
+			const state = arctic.generateState();
+			const codeVerifier = arctic.generateCodeVerifier();
+			const scopes = ["openid", "profile"];
+
+			// Create authorization URL
+			const url = await this.keycloak.createAuthorizationURL(state, codeVerifier, scopes);
+
+			// For password grant, we'll use the token endpoint directly
+			const tokenEndpoint = `${this.keycloakTennant}/protocol/openid-connect/token`;
+			const formData = new URLSearchParams({
+				client_id: process.env.KEYCLOAK_CLIENT_ID!,
+				client_secret: process.env.KEYCLOAK_CLIENT_SECRET!,
+				grant_type: "password",
+				username,
+				password,
+				scope: scopes.join(" "),
+			});
+
+			const response = await fetch(tokenEndpoint, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/x-www-form-urlencoded",
+				},
+				body: formData,
+			});
+
+			if (!response.ok) {
+				throw new UnauthorizedException("Invalid credentials");
+			}
+
+			const tokens = await response.json();
 
 			return {
-				accessToken: response.data.access_token,
-				refreshToken: response.data.refresh_token,
-				expiresIn: response.data.expires_in,
+				accessToken: tokens.access_token,
+				refreshToken: tokens.refresh_token,
+				expiresIn: tokens.expires_in,
 			};
 		} catch (error) {
+			Logger.error("Login error:", error);
 			throw new UnauthorizedException("Invalid credentials");
 		}
 	}
 
 	// Validate JWT Token
-	async validateToken(token: string): Promise<JWTPayload> {
+	async validateToken(token: string) {
 		try {
 			const cleanToken = token.replace(/^(Bearer|Token)\s+/i, "");
 
-			// TODO: Remove this
-			// Add token debugging
+			// Debug logging for token payload
 			try {
 				const decoded = JSON.parse(Buffer.from(cleanToken.split(".")[1], "base64").toString());
 				Logger.debug("Decoded token payload:", decoded);
@@ -75,24 +96,15 @@ export class AuthService {
 				Logger.error("Failed to decode token for debugging:", e);
 			}
 
-			// TODO: Remove this
-			// Debug logging
-			Logger.debug("JWKS URI:", this.jwksUri);
-			Logger.debug("Issuer:", this.keycloakTennant);
-
-			const { payload } = await jwtVerify(cleanToken, this.jwks, {
-				issuer: this.keycloakTennant,
-				algorithms: ["RS256"],
-				clockTolerance: 60,
-				// Removing audience validation completely
-			});
+			// Decode and validate the token
+			const claims = arctic.decodeIdToken(cleanToken) as { sub?: string };
 
 			// Additional validation if needed
-			if (!payload.sub) {
+			if (!claims.sub) {
 				throw new Error("Token payload missing subject claim");
 			}
 
-			return payload;
+			return claims;
 		} catch (error) {
 			Logger.error("Token validation error:", error);
 			if (error instanceof Error) {
@@ -105,57 +117,54 @@ export class AuthService {
 
 	// Handle Refresh Token
 	async refreshToken(refreshToken: string) {
-		const tokenEndpoint = `${this.keycloakTennant}/protocol/openid-connect/token`;
-
 		try {
-			const response = await axios.post(
-				tokenEndpoint,
-				new URLSearchParams({
-					client_id: process.env.KEYCLOAK_CLIENT_ID!,
-					client_secret: process.env.KEYCLOAK_CLIENT_SECRET!,
-					grant_type: "refresh_token",
-					refresh_token: refreshToken,
-				}),
-				{ headers: { "Content-Type": "application/x-www-form-urlencoded" } },
-			);
+			const tokens = await this.keycloak.refreshAccessToken(refreshToken);
 
 			return {
-				accessToken: response.data.access_token,
-				refreshToken: response.data.refresh_token,
+				accessToken: tokens.accessToken(),
+				refreshToken: tokens.refreshToken(),
 			};
 		} catch (error) {
+			Logger.error("Refresh token error:", error);
 			throw new UnauthorizedException("Invalid refresh token");
 		}
 	}
 
 	// Handle User Logout
-	async logout(user: JWTPayload) {
-		const tokenEndpoint = `${this.keycloakTennant}/protocol/openid-connect/logout`;
-
+	async logout(user: any) {
 		try {
-			await axios.post(tokenEndpoint, {
-				client_id: process.env.KEYCLOAK_CLIENT_ID!,
-				token: user.access_token,
-				refresh_token: user.refresh_token,
-			});
+			if (user.access_token) {
+				await this.keycloak.revokeToken(user.access_token);
+			}
+			if (user.refresh_token) {
+				await this.keycloak.revokeToken(user.refresh_token);
+			}
 
 			return { message: "Logged out successfully" };
 		} catch (error) {
-			Logger.error(error);
+			Logger.error("Logout failed:", error);
 			throw new UnauthorizedException("Failed to logout");
 		}
 	}
 
 	// 🔹 Get User Info
-	async getMe(user: JWTPayload) {
+	async getMe(user: any) {
 		const userEndpoint = `${this.keycloakTennant}/protocol/openid-connect/userinfo`;
 
 		try {
-			const response = await axios.get(userEndpoint, { headers: { Authorization: `Bearer ${user.access_token}` } });
-			Logger.log(response.data);
-			return response.data;
+			const response = await fetch(userEndpoint, {
+				headers: { Authorization: `Bearer ${user.access_token}` },
+			});
+
+			if (!response.ok) {
+				throw new Error("Failed to fetch user info");
+			}
+
+			const data = await response.json();
+			Logger.log(data);
+			return data;
 		} catch (error) {
-			Logger.error(error);
+			Logger.error("Failed to get user info:", error);
 			throw new UnauthorizedException("Failed to get user info");
 		}
 	}

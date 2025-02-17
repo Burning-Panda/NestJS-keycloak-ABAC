@@ -38,7 +38,7 @@ export class AuthController {
 
 	@UseGuards(AuthGuard)
 	@Get("me")
-	me(@Req() req): Promise<Object> {
+	me(@Req() req): Promise<any> {
 		return this.authService.getMe(req.user);
 	}
 }
